@@ -56,7 +56,7 @@ function main() {
                 posts: {
                     create: {
                         title: "Timber Post Title",
-                        content: "Timber Post"
+                        content: "Timber Post",
                     },
                 },
             },
@@ -118,6 +118,40 @@ function main() {
         r2.forEach((us) => {
             console.log(us);
         });
+        console.log("Transaction sample...");
+        console.log("before transaction ...");
+        let allPosts = yield prisma.post.findMany();
+        console.log(allPosts);
+        try {
+            const newPost = {
+                content: "New Post",
+                title: "New Post Title",
+                author: {
+                    connect: {
+                        id: user.id
+                    }
+                }
+            };
+            const newPostDupe = {
+                content: "New Post",
+                title: "New Post Title",
+                author: {
+                    connect: {
+                        id: user.id
+                    }
+                }
+            };
+            const [c1, c2] = yield prisma.$transaction([
+                prisma.post.create({ data: newPost }),
+                prisma.post.create({ data: newPostDupe })
+            ]);
+        }
+        catch (error) {
+            console.log("expected error ... rollback already happened!");
+        }
+        console.log("after transaction ...");
+        allPosts = yield prisma.post.findMany();
+        console.log(allPosts);
     });
 }
 main()

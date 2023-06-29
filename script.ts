@@ -49,7 +49,7 @@ async function main() {
       posts: {
         create: {
           title: "Timber Post Title",
-          content: "Timber Post"
+          content: "Timber Post",
         },
       },
     },
@@ -117,6 +117,42 @@ async function main() {
   r2.forEach((us) => {
     console.log(us);
   });
+
+  console.log("Transaction sample...");
+  console.log("before transaction ...");
+  let allPosts = await prisma.post.findMany();
+  console.log(allPosts);
+
+  try {
+    const newPost: Prisma.PostCreateInput = {
+      content: "New Post",
+      title: "New Post Title",
+      author: {
+        connect: {
+          id: user.id
+        }
+      }
+    };
+    const newPostDupe: Prisma.PostCreateInput = {
+      content: "New Post",
+      title: "New Post Title",
+      author: {
+        connect: {
+          id: user.id
+        }
+      }
+    };
+    const [c1, c2] = await prisma.$transaction([
+      prisma.post.create({data: newPost}),
+      prisma.post.create({data: newPostDupe})
+    ]);
+  } catch (error) {
+    console.log("expected error ... rollback already happened!");
+  }
+
+  console.log("after transaction ...");
+  allPosts = await prisma.post.findMany();
+  console.log(allPosts);
 }
 
 main()
